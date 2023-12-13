@@ -22,7 +22,12 @@ class m231212_180101_request_log extends Migration
             'created_at' => $this->timestamp()->notNull()->defaultExpression('CURRENT_TIMESTAMP'),
         ]);
 
-        $this->execute("CREATE EVENT IF NOT EXISTS `delete_request_log` ON SCHEDULE EVERY 1 DAY STARTS '2020-01-01 00:00:00' ON COMPLETION PRESERVE ENABLE DO DELETE FROM request_log WHERE created_at < DATE_SUB(NOW(), INTERVAL 3 YEAR)");
+        $this->execute("CREATE OR REPLACE FUNCTION delete_request_log() RETURNS TRIGGER AS $$
+        BEGIN
+            DELETE FROM request_log WHERE created_at < NOW() - INTERVAL '3 YEAR';
+            RETURN NULL;
+        END;
+        $$ LANGUAGE plpgsql;");
 
         $this->createIndex(
             'idx-request_log-ip',
@@ -54,8 +59,27 @@ class m231212_180101_request_log extends Migration
      */
     public function safeDown()
     {
-        $this->dropTable($this->tableName);
+        $this->dropIndex(
+            'idx-request_log-ip',
+            $this->tableName
+        );
 
-        $this->execute('DROP EVENT IF EXISTS `delete_request_log`');
+        $this->dropIndex(
+            'idx-request_log-method',
+            $this->tableName
+        );
+
+        $this->dropIndex(
+            'idx-request_log-action',
+            $this->tableName
+        );
+
+        $this->dropIndex(
+            'idx-request_log-created_at',
+            $this->tableName
+        );
+
+        $this->execute('DROP FUNCTION delete_request_log()');
+        $this->dropTable($this->tableName);
     }
 }

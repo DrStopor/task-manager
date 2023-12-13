@@ -1,27 +1,36 @@
 <?php
 
-namespace custom;
+namespace app\custom;
 
 use yii\db\Migration;
 
 class CustomMigration extends Migration
 {
-    public function createPartition($tableName, $partitionName, $partitionValue)
+    public null|string $dbType;
+
+    public function init(): void
     {
-        $this->execute("ALTER TABLE {$tableName} ADD PARTITION (PARTITION {$partitionName} VALUES LESS THAN ({$partitionValue}))");
+        parent::init();
+        $this->dbType = $this->db->getDriverName();
     }
 
-    public function dropPartition($tableName, $partitionName)
-    {
-        $this->execute("ALTER TABLE {$tableName} DROP PARTITION {$partitionName}");
-    }
-
-    public function createPartitionTable($tableName, $partitionName, $partitionValue)
+    /**
+     * @param string $tableName
+     * @param string $partitionName
+     * @param mixed $partitionValue
+     * @return void
+     */
+    public function createPartitionTable(string $tableName, string $partitionName, mixed $partitionValue): void
     {
         $this->execute("CREATE TABLE {$tableName}_{$partitionName} PARTITION OF {$tableName} FOR VALUES IN ({$partitionValue})");
     }
 
-    public function dropPartitionTable($tableName, $partitionName)
+    /**
+     * @param string $tableName
+     * @param string $partitionName
+     * @return void
+     */
+    public function dropPartitionTable(string $tableName, string $partitionName): void
     {
         $this->execute("DROP TABLE {$tableName}_{$partitionName}");
     }

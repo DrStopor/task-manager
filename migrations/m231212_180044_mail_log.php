@@ -1,11 +1,11 @@
 <?php
 
-use yii\db\Migration;
+use app\custom\CustomMigration;
 
 /**
  * Class m231212_180044_mail_log
  */
-class m231212_180044_mail_log extends Migration
+class m231212_180044_mail_log extends CustomMigration
 {
     /**
      * {@inheritdoc}
@@ -13,7 +13,6 @@ class m231212_180044_mail_log extends Migration
     public function safeUp()
     {
         $this->createTable('mail_log', [
-            'id' => $this->primaryKey(),
             'from' => $this->string(255)->notNull(),
             'to' => $this->string(255)->notNull(),
             'cc' => $this->string(255),
@@ -27,24 +26,15 @@ class m231212_180044_mail_log extends Migration
             'message_id' => $this->integer()->notNull(),
             'error' => $this->text(),
             'is_sent' => $this->boolean()->notNull()->defaultValue(false),
-        ]);
+        ], 'PARTITION BY LIST (is_sent)');
 
-        $this->execute('CREATE TABLE mail_log_not_send PARTITION OF mail_log FOR VALUES IN (false)');
-        $this->execute('CREATE TABLE mail_log_send PARTITION OF mail_log FOR VALUES IN (true)');
+        $this->createPartitionTable('mail_log', 'not_send', 'false');
+        $this->createPartitionTable('mail_log', 'send', 'true');
 
         $this->createIndex(
             'idx-mail_log-message_id',
             'mail_log',
             'message_id'
-        );
-
-        $this->addForeignKey(
-            'fk-mail_log-message_id',
-            'mail_log',
-            'message_id',
-            'message',
-            'id',
-            'CASCADE'
         );
 
         $this->createIndex(
@@ -59,10 +49,6 @@ class m231212_180044_mail_log extends Migration
      */
     public function safeDown()
     {
-        $this->dropForeignKey(
-            'fk-mail_log-message_id',
-            'mail_log'
-        );
 
         $this->dropIndex(
             'idx-mail_log-message_id',
@@ -73,6 +59,9 @@ class m231212_180044_mail_log extends Migration
             'idx-mail_log-status',
             'mail_log'
         );
+
+        $this->dropPartitionTable('mail_log', 'not_send');
+        $this->dropPartitionTable('mail_log', 'send');
 
         $this->dropTable('mail_log');
     }

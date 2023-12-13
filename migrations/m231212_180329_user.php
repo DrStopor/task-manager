@@ -32,7 +32,7 @@ class m231212_180329_user extends Migration
             $this->tableName,
             'token_id',
             'token',
-            'token_id',
+            'id',
             'CASCADE'
         );
     }
