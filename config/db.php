@@ -5,7 +5,7 @@ use yii\db\Connection;
 return [
     'class' => Connection::class,
     'dsn' => 'pgsql:host=localhost;dbname=task_manager',
-    'username' => 'task-manager',
+    'username' => 'TaskManager',
     'password' => '123456',
     'charset' => 'utf8',
 
