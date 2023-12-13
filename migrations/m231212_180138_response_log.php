@@ -22,7 +22,7 @@ class m231212_180138_response_log extends Migration
             'message_id' => $this->integer()->notNull(),
         ]);
 
-        $this->execute('CREATE EVENT IF NOT EXISTS `delete_response_log` ON SCHEDULE EVERY 1 DAY STARTS \'2020-01-01 00:00:00\' ON COMPLETION PRESERVE ENABLE DO DELETE FROM response_log WHERE created_at < DATE_SUB(NOW(), INTERVAL 3 YEAR)');
+        $this->execute('CREATE OR REPLACE FUNCTION delete_response_log() RETURNS TRIGGER AS $delete_response_log$ BEGIN DELETE FROM response_log WHERE created_at < NOW() - INTERVAL \'3 year\'; RETURN NULL; END; $delete_response_log$ LANGUAGE plpgsql;');
 
         $this->createIndex(
             'idx-response_log-user_id',
@@ -34,24 +34,6 @@ class m231212_180138_response_log extends Migration
             'idx-response_log-message_id',
             $this->tableName,
             'message_id'
-        );
-
-        $this->addForeignKey(
-            'fk-response_log-user_id',
-            $this->tableName,
-            'user_id',
-            'user',
-            'id',
-            'CASCADE'
-        );
-
-        $this->addForeignKey(
-            'fk-response_log-message_id',
-            $this->tableName,
-            'message_id',
-            'message',
-            'id',
-            'CASCADE'
         );
 
         $this->createIndex(
@@ -66,16 +48,6 @@ class m231212_180138_response_log extends Migration
      */
     public function safeDown()
     {
-        $this->dropForeignKey(
-            'fk-response_log-user_id',
-            $this->tableName
-        );
-
-        $this->dropForeignKey(
-            'fk-response_log-message_id',
-            $this->tableName
-        );
-
         $this->dropIndex(
             'idx-response_log-user_id',
             $this->tableName
@@ -93,6 +65,6 @@ class m231212_180138_response_log extends Migration
 
         $this->dropTable($this->tableName);
 
-        $this->execute('DROP EVENT IF EXISTS `delete_response_log`');
+        $this->execute('DROP FUNCTION delete_response_log()');
     }
 }

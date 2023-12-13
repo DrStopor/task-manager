@@ -1,11 +1,11 @@
 <?php
 
-use yii\db\Migration;
+use app\custom\CustomMigration;
 
 /**
  * Class m231212_180202_message
  */
-class m231212_180202_message extends Migration
+class m231212_180202_message extends CustomMigration
 {
     private $tableName = 'message';
     /**
@@ -14,7 +14,7 @@ class m231212_180202_message extends Migration
     public function safeUp()
     {
         $this->createTable($this->tableName, [
-            'id' => $this->primaryKey(),
+            'ext_id' => $this->string()->notNull(),
             'message' => $this->text()->notNull(),
             'status_id' => $this->integer()->notNull(),
             'contact_id' => $this->integer()->notNull(),
@@ -22,10 +22,16 @@ class m231212_180202_message extends Migration
             'comment' => $this->text(),
             'created_at' => $this->timestamp()->notNull()->defaultExpression('CURRENT_TIMESTAMP'),
             'updated_at' => $this->timestamp(),
-        ]);
+        ], 'PARTITION BY LIST (status_id)');
 
-        $this->execute('CREATE TABLE message_active PARTITION OF message FOR VALUES IN (\'Active\')');
-        $this->execute('CREATE TABLE message_resolve PARTITION OF message FOR VALUES IN (\'Resolve\')');
+        $this->createPartitionTable($this->tableName, 'active', '1');
+        $this->createPartitionTable($this->tableName, 'resolve', '2');
+
+        $this->createIndex(
+            'idx-message-ext_id',
+            $this->tableName,
+            'ext_id'
+        );
 
         $this->createIndex(
             'idx-message-status_id',
@@ -62,15 +68,6 @@ class m231212_180202_message extends Migration
             'id',
             'CASCADE'
         );
-
-        $this->addForeignKey(
-            'fk-message-user_id',
-            $this->tableName,
-            'user_id',
-            'user',
-            'id',
-            'CASCADE'
-        );
     }
 
     /**
@@ -78,10 +75,6 @@ class m231212_180202_message extends Migration
      */
     public function safeDown()
     {
-
-        $this->execute('DROP TABLE message_active');
-        $this->execute('DROP TABLE message_resolve');
-
         $this->dropIndex(
             'idx-message-status_id',
             $this->tableName
@@ -107,10 +100,8 @@ class m231212_180202_message extends Migration
             $this->tableName
         );
 
-        $this->dropForeignKey(
-            'fk-message-user_id',
-            $this->tableName
-        );
+        $this->dropPartitionTable($this->tableName, 'active');
+        $this->dropPartitionTable($this->tableName, 'resolve');
 
         $this->dropTable($this->tableName);
     }
