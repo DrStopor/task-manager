@@ -1,5 +1,10 @@
 <?php
 
+use yii\caching\FileCache;
+use app\models\User;
+use app\modules\api\Module;
+use yii\web\JsonParser;
+
 $params = require __DIR__ . '/params.php';
 $db = require __DIR__ . '/db.php';
 
@@ -9,19 +14,24 @@ $config = [
     'bootstrap' => ['log'],
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
-        '@npm'   => '@vendor/npm-asset',
+        '@npm' => '@vendor/npm-asset',
     ],
     'components' => [
         'request' => [
             // !!! insert a secret key in the following (if it is empty) - this is required by cookie validation
             'cookieValidationKey' => 'Mm7HG_llA-d5RvvisiS70_GaDb7TNA-f',
+            'parsers' => [
+                'application/json' => JsonParser::class
+            ]
         ],
-        'cache' => [
-            'class' => 'yii\caching\FileCache',
-        ],
+        /*'cache' => [
+            'class' => FileCache::class,
+        ],*/
         'user' => [
-            'identityClass' => 'app\models\UserBase',
-            'enableAutoLogin' => true,
+            'identityClass' => User::class,
+            'enableAutoLogin' => false,
+            'enableSession' => false,
+            'loginUrl' => null,
         ],
         'errorHandler' => [
             'errorAction' => 'site/error',
@@ -42,14 +52,62 @@ $config = [
             ],
         ],
         'db' => $db,
-        /*
         'urlManager' => [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
+                'requests' => 'api/message/request',
+                '<_a:(.*)>' => 'api/message/not-found',
+                /*[
+                    'class' => \yii\rest\UrlRule::class,
+                    'pluralize' => false,
+                    'controller' => ['api/message'],
+                ],*/
+                /*[
+                    'class' => \yii\rest\UrlRule::class,
+                    'pluralize' => false,
+                    'controller' => ['api/message'],
+                    'extraPatterns' => [
+                        'GET requests' => 'api/message/request',
+                        'GET requests/<id>' => 'request',
+                        'POST requests' => 'requests',
+                        'POST requests/<id>' => 'set-comment',
+                        'PUT requests/<id>' => 'recived-message',
+                    ],
+                ],*/
+                /*[
+                    'class' => \yii\rest\UrlRule::class,
+                    'pluralize' => false,
+                    'controller' => ['api/message'],
+                    'extraPatterns' => [
+                        'GET request' => 'request',
+                        'GET request/<id>' => 'request',
+                    ]
+                ],
+                [
+                    'class' => \yii\rest\UrlRule::class,
+                    'pluralize' => false,
+                    'controller' => ['api/message'],
+                    'extraPatterns' => [
+                        'POST requests' => 'requests',
+                        'POST requests/<id>' => 'set-comment',
+                    ],
+                ],
+                [
+                    'class' => \yii\rest\UrlRule::class,
+                    'pluralize' => false,
+                    'controller' => ['api/message'],
+                    'extraPatterns' => [
+                        'PUT requests/<id>' => 'recived-message',
+                    ],
+                ]*/
             ],
         ],
-        */
+    ],
+    'modules' => [
+        'api' => [
+            'class' => Module::class,
+        ],
     ],
     'params' => $params,
 ];

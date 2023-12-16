@@ -7,6 +7,7 @@ use Yii;
 /**
  * This is the model class for table "message".
  *
+ * @property int $id
  * @property string $ext_id
  * @property string $message
  * @property int $status_id
@@ -35,14 +36,19 @@ class Message extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['ext_id', 'message', 'status_id', 'contact_id', 'user_id'], 'required'],
+            [['id'], 'unique'],
+            [['ext_id', 'message', 'contact_id'], 'required'],
             [['message', 'comment'], 'string'],
             [['status_id', 'contact_id', 'user_id'], 'default', 'value' => null],
             [['status_id', 'contact_id', 'user_id'], 'integer'],
+            [['status_id'], 'default', 'value' => 1],
             [['created_at', 'updated_at'], 'safe'],
             [['ext_id'], 'string', 'max' => 255],
             [['contact_id'], 'exist', 'skipOnError' => true, 'targetClass' => Contact::class, 'targetAttribute' => ['contact_id' => 'id']],
             [['status_id'], 'exist', 'skipOnError' => true, 'targetClass' => Status::class, 'targetAttribute' => ['status_id' => 'id']],
+            [['user_id', 'comment', 'updated_at'], 'required', 'when' => function ($model) {
+                return $model->status_id === 2;
+            }],
         ];
     }
 
@@ -52,6 +58,7 @@ class Message extends \yii\db\ActiveRecord
     public function attributeLabels()
     {
         return [
+            'id' => 'Message ID',
             'ext_id' => 'Ext ID',
             'message' => 'Message',
             'status_id' => 'Status ID',

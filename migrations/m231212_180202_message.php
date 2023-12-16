@@ -14,18 +14,16 @@ class m231212_180202_message extends CustomMigration
     public function safeUp()
     {
         $this->createTable($this->tableName, [
+            'id' => $this->primaryKey(),
             'ext_id' => $this->string()->notNull(),
             'message' => $this->text()->notNull(),
-            'status_id' => $this->integer()->notNull(),
+            'status_id' => $this->integer()->defaultValue(1),
             'contact_id' => $this->integer()->notNull(),
-            'user_id' => $this->integer()->notNull(),
+            'user_id' => $this->integer(),
             'comment' => $this->text(),
             'created_at' => $this->timestamp()->notNull()->defaultExpression('CURRENT_TIMESTAMP'),
             'updated_at' => $this->timestamp(),
-        ], 'PARTITION BY LIST (status_id)');
-
-        $this->createPartitionTable($this->tableName, 'active', '1');
-        $this->createPartitionTable($this->tableName, 'resolve', '2');
+        ]);
 
         $this->createIndex(
             'idx-message-ext_id',
@@ -99,9 +97,6 @@ class m231212_180202_message extends CustomMigration
             'fk-message-contact_id',
             $this->tableName
         );
-
-        $this->dropPartitionTable($this->tableName, 'active');
-        $this->dropPartitionTable($this->tableName, 'resolve');
 
         $this->dropTable($this->tableName);
     }

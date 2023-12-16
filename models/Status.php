@@ -32,6 +32,9 @@ class Status extends \yii\db\ActiveRecord
         return [
             [['name'], 'required'],
             [['name'], 'string', 'max' => 255],
+            [['created_at', 'updated_at'], 'safe'],
+            [['name', 'id'], 'unique'],
+            [['created_at'], 'default', 'value' => date('Y-m-d H:i:s')],
         ];
     }
 

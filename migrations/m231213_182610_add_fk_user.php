@@ -29,16 +29,6 @@ class m231213_182610_add_fk_user extends Migration
             'id',
             'CASCADE'
         );
-
-        $this->addForeignKey(
-            'fk-message-user_id',
-            'message',
-            'user_id',
-            'user',
-            'id',
-            'CASCADE'
-        );
-
     }
 
     /**
@@ -54,11 +44,6 @@ class m231213_182610_add_fk_user extends Migration
         $this->dropForeignKey(
             'fk-response_log-user_id',
             'response_log'
-        );
-
-        $this->dropForeignKey(
-            'fk-message-user_id',
-            'message'
         );
     }
 }

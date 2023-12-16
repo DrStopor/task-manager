@@ -17,11 +17,13 @@ class m231212_175947_status extends Migration
         $this->createTable($this->tableName, [
             'id' => $this->primaryKey(),
             'name' => $this->string(255)->notNull(),
+            'created_at' => $this->timestamp()->notNull()->defaultExpression('CURRENT_TIMESTAMP'),
+            'updated_at' => $this->timestamp(),
         ]);
 
         $this->batchInsert($this->tableName, ['name'], [
-            ['Active'],
-            ['Resolve'],
+            ['active'],
+            ['resolve'],
         ]);
     }
 
