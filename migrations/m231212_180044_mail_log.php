@@ -13,6 +13,7 @@ class m231212_180044_mail_log extends CustomMigration
     public function safeUp()
     {
         $this->createTable('mail_log', [
+            'message_id' => $this->integer()->notNull(),
             'from' => $this->string(255)->notNull(),
             'to' => $this->string(255)->notNull(),
             'cc' => $this->string(255),
@@ -23,7 +24,6 @@ class m231212_180044_mail_log extends CustomMigration
             'status' => $this->integer()->notNull(),
             'created_at' => $this->timestamp()->notNull()->defaultExpression('CURRENT_TIMESTAMP'),
             'updated_at' => $this->timestamp(),
-            'message_id' => $this->integer()->notNull(),
             'error' => $this->text(),
             'is_sent' => $this->boolean()->notNull()->defaultValue(false),
         ], 'PARTITION BY LIST (is_sent)');
@@ -32,15 +32,15 @@ class m231212_180044_mail_log extends CustomMigration
         $this->createPartitionTable('mail_log', 'send', 'true');
 
         $this->createIndex(
-            'idx-mail_log-message_id',
-            'mail_log',
-            'message_id'
-        );
-
-        $this->createIndex(
             'idx-mail_log-status',
             'mail_log',
             'status'
+        );
+
+        $this->createIndex(
+            'idx-mail_log-message_id',
+            'mail_log',
+            'message_id'
         );
     }
 
@@ -49,7 +49,6 @@ class m231212_180044_mail_log extends CustomMigration
      */
     public function safeDown()
     {
-
         $this->dropIndex(
             'idx-mail_log-message_id',
             'mail_log'

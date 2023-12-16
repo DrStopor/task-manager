@@ -24,16 +24,18 @@ class m231212_180138_response_log extends Migration
 
         $this->execute('CREATE OR REPLACE FUNCTION delete_response_log() RETURNS TRIGGER AS $delete_response_log$ BEGIN DELETE FROM response_log WHERE created_at < NOW() - INTERVAL \'3 year\'; RETURN NULL; END; $delete_response_log$ LANGUAGE plpgsql;');
 
-        $this->createIndex(
-            'idx-response_log-user_id',
-            $this->tableName,
-            'user_id'
-        );
+        $this->execute('CREATE TRIGGER delete_response_log AFTER INSERT ON response_log FOR EACH ROW EXECUTE PROCEDURE delete_response_log();');
 
         $this->createIndex(
             'idx-response_log-message_id',
             $this->tableName,
             'message_id'
+        );
+
+        $this->createIndex(
+            'idx-response_log-user_id',
+            $this->tableName,
+            'user_id'
         );
 
         $this->createIndex(
@@ -49,6 +51,11 @@ class m231212_180138_response_log extends Migration
     public function safeDown()
     {
         $this->dropIndex(
+            'idx-response_log-created_at',
+            $this->tableName
+        );
+
+        $this->dropIndex(
             'idx-response_log-user_id',
             $this->tableName
         );
@@ -58,13 +65,9 @@ class m231212_180138_response_log extends Migration
             $this->tableName
         );
 
-        $this->dropIndex(
-            'idx-response_log-created_at',
-            $this->tableName
-        );
+        $this->execute('DROP TRIGGER delete_response_log ON response_log;');
+        $this->execute('DROP FUNCTION delete_response_log();');
 
         $this->dropTable($this->tableName);
-
-        $this->execute('DROP FUNCTION delete_response_log()');
     }
 }

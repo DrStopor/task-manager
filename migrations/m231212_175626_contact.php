@@ -17,6 +17,7 @@ class m231212_175626_contact extends Migration
             'id' => $this->primaryKey(),
             'name' => $this->string(255)->notNull(),
             'email' => $this->string(255)->notNull()->unique(),
+            'created_at' => $this->timestamp()->notNull()->defaultExpression('CURRENT_TIMESTAMP'),
         ]);
 
         $this->createIndex(

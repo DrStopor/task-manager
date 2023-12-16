@@ -29,6 +29,8 @@ class m231212_180101_request_log extends Migration
         END;
         $$ LANGUAGE plpgsql;");
 
+        $this->execute("CREATE TRIGGER delete_request_log AFTER INSERT ON request_log FOR EACH ROW EXECUTE PROCEDURE delete_request_log();");
+
         $this->createIndex(
             'idx-request_log-ip',
             $this->tableName,
@@ -79,6 +81,7 @@ class m231212_180101_request_log extends Migration
             $this->tableName
         );
 
+        $this->execute('DROP TRIGGER delete_request_log ON request_log');
         $this->execute('DROP FUNCTION delete_request_log()');
         $this->dropTable($this->tableName);
     }
