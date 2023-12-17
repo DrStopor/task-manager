@@ -2,11 +2,16 @@
 
 use yii\db\Connection;
 
+$host = getenv('DB_HOST');
+$dbname = getenv('DB_NAME');
+$username = getenv('DB_USERNAME');
+$password = getenv('DB_PASSWORD');
+
 return [
     'class' => Connection::class,
-    'dsn' => 'pgsql:host=localhost;dbname=task_manager',
-    'username' => 'TaskManager',
-    'password' => '123456',
+    'dsn' => "pgsql:host=$host;dbname=$dbname",
+    'username' => $username,
+    'password' => $password,
     'charset' => 'utf8',
 
     // Schema cache options (for production environment)
