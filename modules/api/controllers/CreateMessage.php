@@ -44,7 +44,7 @@ class CreateMessage
         }
 
         if ($messageModel->save()) {
-            return ResponseHelper::prepareResponse($messageModel, 201, 'Сообщение успешно сохранено');
+            return ResponseHelper::prepareResponse($messageModel, 201);
         }
         return ResponseHelper::prepareResponse([], 400, 'Не удалось сохранить сообщение');
     }

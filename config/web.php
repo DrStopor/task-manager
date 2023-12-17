@@ -24,9 +24,9 @@ $config = [
                 'application/json' => JsonParser::class
             ]
         ],
-        /*'cache' => [
+        'cache' => [
             'class' => FileCache::class,
-        ],*/
+        ],
         'user' => [
             'identityClass' => User::class,
             'enableAutoLogin' => false,

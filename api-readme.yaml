@@ -1,0 +1,149 @@
+openapi: 3.0.0
+servers:
+  - description: Корневой адрес
+    url: https://task-manager.test
+info:
+  description: Всего лишь простейший мендежер заявок
+  version: "1.0.0"
+  title: Менeджер заявок API
+  contact:
+    email: forWorkPhp@mail.ru
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+tags:
+  - name: Модератор
+    description: Вызовы доступные только для пользователей системы
+  - name: Пользователь
+    description: Вызовы доступные для внешних пользователей (авторов заявок)
+paths:
+  /requests:
+    get:
+      tags:
+        - Модератор
+      summary: Получить все обращения
+      operationId: getMessages
+      description: Получение всех обращений. По умолчанию будут получены только требующие ответа
+      parameters:
+        - in: path
+          name: status
+          description: статус обращения
+          required: false
+          schema:
+            type: string
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: успешный ответ
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
+    post:
+      tags:
+        - Модератор
+        - Пользователь
+      summary: Создание заявки
+      operationId: createMessage
+      description: Добавление заявки в систему
+      responses:
+        '201':
+          description: Обращение успешно сохранено
+        '400':
+          description: 'invalid email, error save'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Message'
+        description: Inventory item to add
+  /requests/{id}:
+    put:
+      tags:
+        - Модератор
+      summary: Ответ на обращение
+      operationId: setComment
+      description: Предоставляет ответ на обращение по его номеру
+      parameters:
+        - in: path
+          name: id
+          description: номер обращения
+          required: true
+          schema:
+            type: integer
+        - in: header
+          name: comment
+          description: ответ на обращение
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: status
+          description: установка статуса для обращения
+          required: true
+          schema:
+            type: string
+      security:
+        - BearerAuth: []
+      responses:
+        '201':
+          description: ответ сохранен и письмо поставлено в очередь
+        '400':
+          description: отсутствуют обязательные поля, указан некорректный статус для смены или не удалось поставить в очередь письмо
+        '404':
+          description: обращения для предоставления ответа не найдено
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MessagePut'
+components:
+  schemas:
+    MessagePut:
+      required:
+        - comment
+        - status
+      type: object
+      properties:
+        status:
+          type: string
+          example: Resolve
+        comment:
+          type: string
+          example: Appolo! We don't watch trouble on your ship!
+    Message:
+      required:
+        - name
+        - email
+        - message
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 12
+        name:
+          type: string
+          example: John
+        email:
+          type: string
+          example: test_john@test.test
+        status:
+          type: string
+          example: Resolve
+        message:
+          type: string
+          example: Huston! We have a trouble!!!
+        comment:
+          type: string
+          example: Appolo! We don't watch trouble on your ship!
+        created_at:
+          type: string
+          example: 01.01.2023 17:45
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: string
