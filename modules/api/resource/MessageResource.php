@@ -65,6 +65,23 @@ class MessageResource extends Message
 
     public function getMessages()
     {
-        return $this->hasMany(MessageResource::class, ['contact_id' => 'id']);
+        return $this->hasMany(__CLASS__, ['contact_id' => 'id']);
+    }
+
+    public static function getAllMessagesByStatusName(string $statusName)
+    {
+        return self::find()
+            ->where(['LOWER(status.name)' => strtolower($statusName)])
+            ->joinWith('status')
+            ->with('contact')
+            ->all();
+    }
+
+    public static function getAllMessages()
+    {
+        return self::find()
+            ->with('contact')
+            ->with('status')
+            ->all();
     }
 }

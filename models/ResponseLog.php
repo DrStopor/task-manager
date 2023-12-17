@@ -12,6 +12,7 @@ use Yii;
  * @property string $created_at
  * @property int $user_id
  * @property int $message_id
+ * @property int $code
  */
 class ResponseLog extends \yii\db\ActiveRecord
 {
@@ -29,11 +30,11 @@ class ResponseLog extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['response', 'user_id', 'message_id'], 'required'],
+            [['response'], 'required'],
             [['response'], 'string'],
             [['created_at'], 'safe'],
             [['user_id', 'message_id'], 'default', 'value' => null],
-            [['user_id', 'message_id'], 'integer'],
+            [['user_id', 'message_id', 'code'], 'integer'],
         ];
     }
 
@@ -48,6 +49,7 @@ class ResponseLog extends \yii\db\ActiveRecord
             'created_at' => 'Created At',
             'user_id' => 'User ID',
             'message_id' => 'Message ID',
+            'code' => 'Code',
         ];
     }
 }

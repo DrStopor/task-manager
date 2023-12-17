@@ -3,19 +3,29 @@
 namespace app\modules\api\controllers;
 
 use app\models\Message;
+use app\modules\api\helpers\Helper;
+use app\modules\api\helpers\ResponseHelper;
 use app\modules\api\resource\ContactResource;
+use app\modules\api\resource\MailQueueResource;
+use app\modules\api\resource\MessageResource;
 use app\modules\api\resource\StatusResource;
 use Yii;
 use yii\filters\auth\HttpBearerAuth;
 use yii\rest\ActiveController;
-use app\modules\api\resource\MessageResource;
 use yii\web\Response;
 
 class MessageController extends ActiveController
 {
     public $modelClass = MessageResource::class;
+    private Comment $comment;
 
-    public function behaviors()
+    public function __construct($id, $module, $config = [])
+    {
+        parent::__construct($id, $module, $config);
+        $this->comment = new Comment();
+    }
+
+    final public function behaviors(): array
     {
         $behaviors = parent::behaviors();
         unset($behaviors['authenticator']);
@@ -24,59 +34,35 @@ class MessageController extends ActiveController
         ];
         $behaviors['authenticator'] = ['class' => HttpBearerAuth::class];
         $behaviors['authenticator']['except'] = ['options'];
-
         return $behaviors;
     }
 
-    final public function actionRequest()
+    final public function actionRequest(): array|Response|\yii\console\Response
     {
         return match (Yii::$app->request->method) {
             'GET' => $this->getRequests(),
             'POST' => $this->createMessage(),
             'PUT' => $this->setComment(),
-            default => $this->prepareResponse([], 404, '[{-_-}] ZZZzz zz z...')
+            default => ResponseHelper::prepareResponse([], 405, '[{-_-}] ZZZzz zz z...')
         };
     }
 
-    public function getRequests(): Response|\yii\console\Response
+    final public function getRequests(): Response|\yii\console\Response
     {
         $status = Yii::$app->request->get('status');
         if ($status) {
-            $model = MessageResource::find()
-                ->where(['LOWER(status.name)' => strtolower($status)])
-                ->joinWith('status')
-                ->with('contact')
-                ->all();
-            return $this->prepareResponse($model);
+            $model = MessageResource::getAllMessagesByStatusName($status);
+            return ResponseHelper::prepareResponse($model);
         }
         // TODO отдавать только ACTIVE
-        $model = MessageResource::find()->with('contact')->with('status')->all();
+        $model = MessageResource::getAllMessages();
 
-        return $this->prepareResponse($model);
+        return ResponseHelper::prepareResponse($model);
     }
 
-    public function setComment(): Response|\yii\console\Response
+    final public function setComment(): Response|\yii\console\Response
     {
-        $id = Yii::$app->request->post('id');
-        $comment = Yii::$app->request->post('comment');
-        $statusName = Yii::$app->request->post('status');
-        $userId = Yii::$app->user->id;
-        $status = StatusResource::findOne(['name' => $statusName]);
-        if (!$status) {
-            return $this->prepareResponse([], 400, 'не удалось сохранить');
-        }
-        $message = MessageResource::findOne($id);
-        if (!$message) {
-            return $this->prepareResponse([], 400, 'не удалось сохранить');
-        }
-
-        $message->comment = $comment;
-        $message->status_id = $status->id;
-        $message->user_id = $userId;
-        if ($message->save()) {
-           $this->prepareResponse($message);
-        }
-        return $this->prepareResponse([], 400, 'не удалось сохранить');
+        return $this->comment->replyToRequest();
     }
 
     public function createMessage()
@@ -116,26 +102,25 @@ class MessageController extends ActiveController
         return ['error' => 'не удалось сохранить 4'];
     }
 
-    /**
-     * @param array|Message $data
-     * @param int $code
-     * @param string|null $error
-     * @return Response|\yii\console\Response
-     */
-    private function prepareResponse(array|Message $data, int $code = 200, string $error = null): Response|\yii\console\Response
-    {
-        $response = Yii::$app->response;
-        $response->format = Response::FORMAT_JSON;
-        $response->data = $data;
-        $response->statusCode = $code;
-        if ($error) {
-            $response->data['error'] = $error;
-        }
-        return $response;
-    }
-
     public function actionNotFound()
     {
-        return $this->prepareResponse([], 404, '[{-_-}] ZZZzz zz z...');
+        return ResponseHelper::prepareResponse([], 404, '[{-_-}] ZZZzz zz z...');
+    }
+
+    public function beforeAction($action)
+    {
+        $requestLog = new \app\models\RequestLog();
+        $requestLog->method = Yii::$app->request->method;
+        $requestLog->ip = Yii::$app->request->userIP;
+        $requestLog->action = Yii::$app->requestedAction->id;
+        $params = [
+            'GET params' => Yii::$app->request->get(),
+            'POST params' => Yii::$app->request->post(),
+        ];
+        $requestLog->params = json_encode($params, JSON_THROW_ON_ERROR);
+
+        $requestLog->save();
+
+        return parent::beforeAction($action);
     }
 }
