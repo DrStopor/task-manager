@@ -2,42 +2,48 @@
 
 namespace app\modules\api\controllers;
 
-use app\models\Message;
-use app\modules\api\helpers\Helper;
 use app\modules\api\helpers\ResponseHelper;
-use app\modules\api\resource\ContactResource;
-use app\modules\api\resource\MailQueueResource;
 use app\modules\api\resource\MessageResource;
-use app\modules\api\resource\StatusResource;
 use Yii;
+use yii\console\Response as ConsoleResponse;
 use yii\filters\auth\HttpBearerAuth;
+use yii\filters\Cors;
 use yii\rest\ActiveController;
-use yii\web\Response;
+use yii\web\Response as WebResponse;
 
 class MessageController extends ActiveController
 {
     public $modelClass = MessageResource::class;
     private Comment $comment;
+    private CreateMessage $createMessage;
 
     public function __construct($id, $module, $config = [])
     {
         parent::__construct($id, $module, $config);
         $this->comment = new Comment();
+        $this->createMessage = new CreateMessage();
     }
 
+    /**
+     * @inheritDoc
+     */
     final public function behaviors(): array
     {
         $behaviors = parent::behaviors();
         unset($behaviors['authenticator']);
         $behaviors['corsFilter'] = [
-            'class' => \yii\filters\Cors::class
+            'class' => Cors::class
         ];
         $behaviors['authenticator'] = ['class' => HttpBearerAuth::class];
         $behaviors['authenticator']['except'] = ['options'];
         return $behaviors;
     }
 
-    final public function actionRequest(): array|Response|\yii\console\Response
+    /**
+     * Дополнительно маршрутизирует запросы (вместо конфига)
+     * @return array|WebResponse|ConsoleResponse
+     */
+    final public function actionRequest(): array|WebResponse|ConsoleResponse
     {
         return match (Yii::$app->request->method) {
             'GET' => $this->getRequests(),
@@ -47,66 +53,54 @@ class MessageController extends ActiveController
         };
     }
 
-    final public function getRequests(): Response|\yii\console\Response
+    /**
+     * Отдает все сообщения с возможностью фильтрации по статусу
+     * @return WebResponse|ConsoleResponse
+     */
+    final public function getRequests(): WebResponse|ConsoleResponse
     {
         $status = Yii::$app->request->get('status');
         if ($status) {
             $model = MessageResource::getAllMessagesByStatusName($status);
             return ResponseHelper::prepareResponse($model);
         }
-        // TODO отдавать только ACTIVE
-        $model = MessageResource::getAllMessages();
 
+        $model = MessageResource::getAllActiveMessages();
         return ResponseHelper::prepareResponse($model);
     }
 
-    final public function setComment(): Response|\yii\console\Response
+    /**
+     * Предоставление ответа на обращение и постановка в очередь отправки
+     * @return WebResponse|ConsoleResponse
+     */
+    final public function setComment(): WebResponse|ConsoleResponse
     {
         return $this->comment->replyToRequest();
     }
 
-    public function createMessage()
+    /**
+     * Создание сообщения
+     * @return WebResponse|ConsoleResponse
+     */
+    final public function createMessage(): WebResponse|ConsoleResponse
     {
-        $extId = Yii::$app->request->post('id');
-        $author = Yii::$app->request->post('name');
-        $email = Yii::$app->request->post('email');
-        $message = Yii::$app->request->post('message');
-
-        $emailValidator = new \yii\validators\EmailValidator();
-        if (!$emailValidator->validate($email)) {
-            return ['error' => 'не удалось сохранить 1'];
-        }
-
-        $contact = ContactResource::findOne(['email' => $email]);
-        if (!$contact) {
-            $contact = new ContactResource();
-            $contact->name = $author;
-            $contact->email = $email;
-            if (!$contact->save()) {
-                return ['error' => 'не удалось сохранить 2'];
-            }
-        }
-
-        $messageModel = new MessageResource();
-        $messageModel->contact_id = $contact->id;
-        $messageModel->message = $message;
-        $messageModel->ext_id = $extId;
-
-        if (!$messageModel->validate()) {
-            return ['error' => 'не удалось сохранить 3'];
-        }
-
-        if ($messageModel->save()) {
-            return ['message' => 'success'];
-        }
-        return ['error' => 'не удалось сохранить 4'];
+        return $this->createMessage->createMessage();
     }
 
-    public function actionNotFound()
+    /**
+     * Ответ на несуществующий маршрут
+     */
+    final public function actionNotFound(): WebResponse|ConsoleResponse
     {
         return ResponseHelper::prepareResponse([], 404, '[{-_-}] ZZZzz zz z...');
     }
 
+    /**
+     * Логирование запросов
+     * @param $action
+     * @return bool
+     * @throws \JsonException
+     */
     public function beforeAction($action)
     {
         $requestLog = new \app\models\RequestLog();
