@@ -5,6 +5,7 @@ namespace app\commands\cron;
 use app\models\ErrorLog;
 use app\models\MailLog;
 use app\models\MailQueue;
+use app\models\Message as MessageModel;
 use yii\console\Controller;
 use yii\db\StaleObjectException;
 use yii\swiftmailer\Message;
@@ -19,16 +20,24 @@ class SendMailFromQueue extends Controller
             ->andWhere(['<', 'created_at', date('Y-m-d H:i:s', strtotime('-3 days'))])
             ->all();
         foreach ($mailQueue as $mail) {
-            $message = new Message();
-            $message->setFrom($mail->from);
-            $message->setTo($mail->to);
-            $message->setSubject($mail->subject);
-            $message->setTextBody($mail->body);
-            $resultSend = $message->send();
+            $messageMailQueue = new Message();
+            $messageMailQueue->setFrom($mail->from);
+            $messageMailQueue->setTo($mail->to);
+            $messageMailQueue->setSubject($mail->subject);
+            $messageMailQueue->setTextBody($mail->body);
+            $resultSend = $messageMailQueue->send();
             $mailLog = new MailLog();
             if ($resultSend) {
                 $mailLog->setAttributes($mail->getAttributes());
                 $mailLog->save();
+
+                $message = MessageModel::findOne($mail->message_id);
+                if ($message) {
+                    $message->is_send = true;
+                    $message->time_send = date('Y-m-d H:i:s');
+                    $message->save();
+                }
+
                 try {
                     $mail->delete();
                 } catch (StaleObjectException $e) {
@@ -36,10 +45,11 @@ class SendMailFromQueue extends Controller
                 } catch (\Throwable $e) {
                     ErrorLog::log($e->getMessage(), __CLASS__, __METHOD__, __LINE__);
                 }
+                continue;
             }
 
             $mailLog->setAttributes($mail->getAttributes());
-            $mailLog->error = "Error send mail. Result send: $resultSend. Error: " . $message->getSwiftMessage()->toString();
+            $mailLog->error = "Error send mail. Result send: $resultSend. Error: " . $messageMailQueue->getSwiftMessage()->toString();
             $mailLog->save();
         }
 
