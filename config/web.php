@@ -57,6 +57,7 @@ $config = [
             'showScriptName' => false,
             'rules' => [
                 'requests' => 'api/message/request',
+                'requests/<id>' => 'api/message/request',
                 '<_a:(.*)>' => 'api/message/not-found',
                 /*[
                     'class' => \yii\rest\UrlRule::class,
@@ -72,7 +73,6 @@ $config = [
                         'GET requests/<id>' => 'request',
                         'POST requests' => 'requests',
                         'POST requests/<id>' => 'set-comment',
-                        'PUT requests/<id>' => 'recived-message',
                     ],
                 ],*/
                 /*[
@@ -92,15 +92,7 @@ $config = [
                         'POST requests' => 'requests',
                         'POST requests/<id>' => 'set-comment',
                     ],
-                ],
-                [
-                    'class' => \yii\rest\UrlRule::class,
-                    'pluralize' => false,
-                    'controller' => ['api/message'],
-                    'extraPatterns' => [
-                        'PUT requests/<id>' => 'recived-message',
-                    ],
-                ]*/
+                ],*/
             ],
         ],
     ],

@@ -18,8 +18,9 @@ class m231212_180138_response_log extends Migration
             'id' => $this->primaryKey(),
             'response' => $this->text()->notNull(),
             'created_at' => $this->timestamp()->notNull()->defaultExpression('CURRENT_TIMESTAMP'),
-            'user_id' => $this->integer()->notNull(),
-            'message_id' => $this->integer()->notNull(),
+            'user_id' => $this->integer(),
+            'message_id' => $this->integer(),
+            'code' => $this->integer()->notNull()->defaultValue(200),
         ]);
 
         $this->execute('CREATE OR REPLACE FUNCTION delete_response_log() RETURNS TRIGGER AS $delete_response_log$ BEGIN DELETE FROM response_log WHERE created_at < NOW() - INTERVAL \'3 year\'; RETURN NULL; END; $delete_response_log$ LANGUAGE plpgsql;');
