@@ -3,6 +3,8 @@
 namespace app\modules\api\resource;
 
 use app\models\Message;
+use app\models\Status;
+use app\modules\api\helpers\StatusEnum;
 
 /**
  * Class MessageResource
@@ -80,6 +82,16 @@ class MessageResource extends Message
     public static function getAllMessages()
     {
         return self::find()
+            ->with('contact')
+            ->with('status')
+            ->all();
+    }
+
+    // get all messages in Active status
+    public static function getAllActiveMessages()
+    {
+        return self::find()
+            ->where(['status_id' => StatusEnum::Active])
             ->with('contact')
             ->with('status')
             ->all();
