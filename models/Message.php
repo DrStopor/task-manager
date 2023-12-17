@@ -16,6 +16,8 @@ use Yii;
  * @property string|null $comment
  * @property string $created_at
  * @property string|null $updated_at
+ * @property bool|null $is_sent
+ * @property string|null $time_sent
  *
  * @property Contact $contact
  * @property Status $status
@@ -42,7 +44,8 @@ class Message extends \yii\db\ActiveRecord
             [['status_id', 'contact_id', 'user_id'], 'default', 'value' => null],
             [['status_id', 'contact_id', 'user_id'], 'integer'],
             [['status_id'], 'default', 'value' => 1],
-            [['created_at', 'updated_at'], 'safe'],
+            [['created_at', 'updated_at', 'time_sent'], 'safe'],
+            [['is_sent'], 'boolean'],
             [['ext_id'], 'string', 'max' => 255],
             [['contact_id'], 'exist', 'skipOnError' => true, 'targetClass' => Contact::class, 'targetAttribute' => ['contact_id' => 'id']],
             [['status_id'], 'exist', 'skipOnError' => true, 'targetClass' => Status::class, 'targetAttribute' => ['status_id' => 'id']],
@@ -67,6 +70,8 @@ class Message extends \yii\db\ActiveRecord
             'comment' => 'Comment',
             'created_at' => 'Created At',
             'updated_at' => 'Updated At',
+            'is_sent' => 'Is Sent',
+            'time_sent' => 'Time Sent',
         ];
     }
 

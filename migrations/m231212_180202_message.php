@@ -23,6 +23,8 @@ class m231212_180202_message extends CustomMigration
             'comment' => $this->text(),
             'created_at' => $this->timestamp()->notNull()->defaultExpression('CURRENT_TIMESTAMP'),
             'updated_at' => $this->timestamp(),
+            'is_sent' => $this->boolean()->defaultValue(false),
+            'time_sent' => $this->timestamp(),
         ]);
 
         $this->createIndex(
