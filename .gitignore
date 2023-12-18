@@ -34,3 +34,6 @@ tests/_support/_generated
 
 #vagrant folder
 /.vagrant
+
+#test migration
+migrations/m231216_200038_create_test_users.php
