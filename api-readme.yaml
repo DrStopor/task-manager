@@ -42,6 +42,10 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Message'
+        '400':
+            description: 'invalid status'
+        '403':
+            description: 'access denied'
     post:
       tags:
         - Модератор
@@ -54,6 +58,10 @@ paths:
           description: Обращение успешно сохранено
         '400':
           description: 'invalid email, error save'
+        '403':
+          description: 'access denied'
+        '404':
+          description: 'not found'
       requestBody:
         content:
           application/json:
@@ -93,6 +101,8 @@ paths:
           description: ответ сохранен и письмо поставлено в очередь
         '400':
           description: отсутствуют обязательные поля, указан некорректный статус для смены или не удалось поставить в очередь письмо
+        '403':
+            description: доступ запрещен
         '404':
           description: обращения для предоставления ответа не найдено
       requestBody:
