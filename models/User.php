@@ -14,6 +14,7 @@ use yii\web\IdentityInterface;
  * @property string|null $description
  * @property int $token_id
  * @property string $created_at
+ * @property int $role_id
  *
  * @property Token $token
  */
@@ -35,7 +36,7 @@ class User extends ActiveRecord implements IdentityInterface
         return [
             [['name', 'token_id'], 'required'],
             [['token_id'], 'default', 'value' => null],
-            [['token_id'], 'integer'],
+            [['token_id', 'role_id'], 'integer'],
             [['created_at'], 'safe'],
             [['name'], 'string', 'max' => 255],
             [['description'], 'string', 'max' => 512],
@@ -54,6 +55,7 @@ class User extends ActiveRecord implements IdentityInterface
             'description' => 'Description',
             'token_id' => 'Token ID',
             'created_at' => 'Created At',
+            'role_id' => 'Role ID',
         ];
     }
 
@@ -110,5 +112,10 @@ class User extends ActiveRecord implements IdentityInterface
     public function validateAuthKey($authKey)
     {
         return null;
+    }
+
+    public function getRole(): \yii\db\ActiveQuery
+    {
+        return $this->hasOne(Role::class, ['id' => 'role_id']);
     }
 }

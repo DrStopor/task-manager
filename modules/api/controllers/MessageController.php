@@ -59,6 +59,10 @@ class MessageController extends ActiveController
      */
     final public function getRequests(): WebResponse|ConsoleResponse
     {
+        if (!Yii::$app->user->can('admin') && !Yii::$app->user->can('moderator')) {
+            return ResponseHelper::prepareResponse([], 403, 'Доступ запрещен');
+        }
+
         $status = Yii::$app->request->get('status');
         if ($status) {
             $model = MessageResource::getAllMessagesByStatusName($status);
@@ -75,6 +79,10 @@ class MessageController extends ActiveController
      */
     final public function setComment(): WebResponse|ConsoleResponse
     {
+        if (!Yii::$app->user->can('admin') && !Yii::$app->user->can('moderator')) {
+            return ResponseHelper::prepareResponse([], 403, 'Доступ запрещен');
+        }
+
         return $this->comment->replyToRequest();
     }
 
@@ -84,6 +92,9 @@ class MessageController extends ActiveController
      */
     final public function createMessage(): WebResponse|ConsoleResponse
     {
+        if (!Yii::$app->user->can('disabled')) {
+            return ResponseHelper::prepareResponse([], 403, 'Доступ запрещен');
+        }
         return $this->createMessage->createMessage();
     }
 
