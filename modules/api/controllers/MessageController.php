@@ -2,6 +2,7 @@
 
 namespace app\modules\api\controllers;
 
+use app\models\User;
 use app\modules\api\helpers\ResponseHelper;
 use app\modules\api\resource\MessageResource;
 use Yii;
@@ -16,6 +17,7 @@ class MessageController extends ActiveController
     public $modelClass = MessageResource::class;
     private Comment $comment;
     private CreateMessage $createMessage;
+    private User $user;
 
     public function __construct($id, $module, $config = [])
     {
@@ -46,9 +48,9 @@ class MessageController extends ActiveController
     final public function actionRequest(): array|WebResponse|ConsoleResponse
     {
         return match (Yii::$app->request->method) {
-            'GET' => $this->getRequests(),
-            'POST' => $this->createMessage(),
-            'PUT' => $this->setComment(),
+            'GET' => $this->actionRequests(),
+            'POST' => $this->actionCreateMessage(),
+            'PUT' => $this->actionSetComment(),
             default => ResponseHelper::prepareResponse([], 405, '[{-_-}] ZZZzz zz z...')
         };
     }
@@ -57,9 +59,11 @@ class MessageController extends ActiveController
      * Отдает все сообщения с возможностью фильтрации по статусу
      * @return WebResponse|ConsoleResponse
      */
-    final public function getRequests(): WebResponse|ConsoleResponse
+    final public function actionRequests(): WebResponse|ConsoleResponse
     {
-        if (!Yii::$app->user->can('admin') && !Yii::$app->user->can('moderator')) {
+       $accessRoles = ['admin', 'moderator'];
+
+        if (!in_array($this->user->role->name, $accessRoles, true)) {
             return ResponseHelper::prepareResponse([], 403, 'Доступ запрещен');
         }
 
@@ -77,9 +81,11 @@ class MessageController extends ActiveController
      * Предоставление ответа на обращение и постановка в очередь отправки
      * @return WebResponse|ConsoleResponse
      */
-    final public function setComment(): WebResponse|ConsoleResponse
+    final public function actionSetComment(): WebResponse|ConsoleResponse
     {
-        if (!Yii::$app->user->can('admin') && !Yii::$app->user->can('moderator')) {
+        $accessRoles = ['admin', 'moderator'];
+
+        if (!in_array($this->user->role->name, $accessRoles, true)) {
             return ResponseHelper::prepareResponse([], 403, 'Доступ запрещен');
         }
 
@@ -90,11 +96,14 @@ class MessageController extends ActiveController
      * Создание сообщения
      * @return WebResponse|ConsoleResponse
      */
-    final public function createMessage(): WebResponse|ConsoleResponse
+    final public function actionCreateMessage(): WebResponse|ConsoleResponse
     {
-        if (!Yii::$app->user->can('disabled')) {
+        $accessRoles = ['admin', 'moderator', 'public'];
+
+        if (!in_array($this->user->role->name, $accessRoles, true)) {
             return ResponseHelper::prepareResponse([], 403, 'Доступ запрещен');
         }
+
         return $this->createMessage->createMessage();
     }
 
@@ -112,7 +121,7 @@ class MessageController extends ActiveController
      * @return bool
      * @throws \JsonException
      */
-    public function beforeAction($action)
+    public function beforeAction($action): bool
     {
         $requestLog = new \app\models\RequestLog();
         $requestLog->method = Yii::$app->request->method;
@@ -125,6 +134,16 @@ class MessageController extends ActiveController
         $requestLog->params = json_encode($params, JSON_THROW_ON_ERROR);
 
         $requestLog->save();
+
+        // set user by token
+        $token = Yii::$app->request->headers->get('Authorization');
+        if ($token) {
+            $token = str_replace('Bearer ', '', $token);
+            $user = User::findIdentityByAccessToken($token);
+            if ($user) {
+                $this->user = $user;
+            }
+        }
 
         return parent::beforeAction($action);
     }

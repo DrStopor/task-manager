@@ -34,7 +34,7 @@ $config = [
             'loginUrl' => null,
         ],
         'errorHandler' => [
-            'errorAction' => 'site/error',
+            'errorAction' => 'api/message/not-found',
         ],
         'mailer' => [
             'class' => \yii\symfonymailer\Mailer::class,
@@ -56,43 +56,11 @@ $config = [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
-                'requests' => 'api/message/request',
-                'requests/<id>' => 'api/message/request',
+                'GET requests' => 'api/message/requests',
+                'GET requests/<id>' => 'api/message/requests',
+                'POST requests' => 'api/message/create-message',
+                'PUT requests/<id>' => 'api/message/set-comment',
                 '<_a:(.*)>' => 'api/message/not-found',
-                /*[
-                    'class' => \yii\rest\UrlRule::class,
-                    'pluralize' => false,
-                    'controller' => ['api/message'],
-                ],*/
-                /*[
-                    'class' => \yii\rest\UrlRule::class,
-                    'pluralize' => false,
-                    'controller' => ['api/message'],
-                    'extraPatterns' => [
-                        'GET requests' => 'api/message/request',
-                        'GET requests/<id>' => 'request',
-                        'POST requests' => 'requests',
-                        'POST requests/<id>' => 'set-comment',
-                    ],
-                ],*/
-                /*[
-                    'class' => \yii\rest\UrlRule::class,
-                    'pluralize' => false,
-                    'controller' => ['api/message'],
-                    'extraPatterns' => [
-                        'GET request' => 'request',
-                        'GET request/<id>' => 'request',
-                    ]
-                ],
-                [
-                    'class' => \yii\rest\UrlRule::class,
-                    'pluralize' => false,
-                    'controller' => ['api/message'],
-                    'extraPatterns' => [
-                        'POST requests' => 'requests',
-                        'POST requests/<id>' => 'set-comment',
-                    ],
-                ],*/
             ],
         ],
     ],
